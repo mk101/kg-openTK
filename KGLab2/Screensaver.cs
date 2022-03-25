@@ -9,22 +9,20 @@ namespace KGLab2;
 public sealed class Screensaver : GameWindow {
     private int _vertexBufferObject;
     private int _vertexArrayObject;
-    private readonly Triangle _triangle;
+    private readonly List<Triangle> _triangles;
     private Shader _shader;
 
+    private float[] _vertices;
+    
     public Screensaver(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings) {
-        _triangle = new Triangle(new[] {
-            -1f, -1f, 0.0f, // Bottom-left vertex
-             1f, -1f, 0.0f, // Bottom-right vertex
-             0f,  1f, 0.0f  // Top vertex
-        });
+        _triangles = new List<Triangle>(Triangle.GeneratePlane(10));
     }
 
     protected override void OnLoad() {
         base.OnLoad();
         
-        GL.ClearColor(1f, 1f, 1f, 1f);
+        GL.ClearColor(0f, 0f, 0f, 1f);
 
         // We need to send our vertices over to the graphics card so OpenGL can use them.
         // To do this, we need to create what's called a Vertex Buffer Object (VBO).
@@ -40,7 +38,8 @@ public sealed class Screensaver : GameWindow {
         // The second argument is the handle to our buffer.
         GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
         // Finally, upload the vertices to the buffer.
-        GL.BufferData(BufferTarget.ArrayBuffer, _triangle.Vertices.Length * sizeof(float), _triangle.Vertices, BufferUsageHint.StaticDraw);
+        _vertices = Triangle.GetAllVertices(_triangles);
+        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
         
         // One notable thing about the buffer we just loaded data into is that it doesn't have any structure to it. It's just a bunch of floats (which are actaully just bytes).
         // The opengl driver doesn't know how this data should be interpreted or how it should be divided up into vertices. To do this opengl introduces the idea of a 
@@ -92,7 +91,7 @@ public sealed class Screensaver : GameWindow {
         // Bind the VAO
         GL.BindVertexArray(_vertexArrayObject);
         // And then call our drawing function.
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / 3);
         
         // OpenTK windows are what's known as "double-buffered". In essence, the window manages two buffers.
         // One is rendered to while the other is currently displayed by the window.
