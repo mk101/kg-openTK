@@ -1,5 +1,6 @@
 ﻿using KGLab2.Common;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -7,62 +8,48 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 namespace KGLab2; 
 
 public sealed class Screensaver : GameWindow {
-    private int _vertexBufferObject;
-    private int _vertexArrayObject;
-    private readonly List<Triangle> _triangles;
-    private Shader _shader;
-    private Texture _texture;
+    private readonly List<Triangle> _finalTriangles;
+    private double _time;
+    private readonly IRenderer _renderer;
 
-    private float[] _vertices;
-    
-    public Screensaver(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
+    private List<Triangle> _movableTriangles;
+    private MoveController _moveController;
+
+    public Screensaver(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, IRenderer renderer)
         : base(gameWindowSettings, nativeWindowSettings) {
-        _triangles = new List<Triangle>(Triangle.GeneratePlane(10));
+        _finalTriangles = new List<Triangle>(Triangle.GeneratePlane(10));
+        _movableTriangles = new List<Triangle>(Triangle.ShuffleTriangles(_finalTriangles));
+        _renderer = renderer;
     }
 
     protected override void OnLoad() {
         base.OnLoad();
-        
-        GL.ClearColor(0f, 0f, 0f, 1f);
-        
-        _vertexBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
 
-        _vertices = Triangle.GetAllVertices(_triangles);
-        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+        _moveController = new MoveController(0.0, _finalTriangles, 10000.0);
+        _moveController.EndMoving += MoveControllerOnEndMoving;
         
-        _vertexArrayObject = GL.GenVertexArray();
-        GL.BindVertexArray(_vertexArrayObject);
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-        GL.EnableVertexAttribArray(0);
-        
-        _shader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
-        _shader.Use();
-        
-        var vertexLocation = _shader.GetAttribLocation("aPosition");
-        GL.EnableVertexAttribArray(vertexLocation);
-        GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-        
-        var texCordLocation = _shader.GetAttribLocation("aTexCord");
-        GL.EnableVertexAttribArray(texCordLocation);
-        GL.VertexAttribPointer(texCordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
-        
-        _texture = Texture.LoadFromFile("../../../Resources/sobachka.jpg", false);
-        _texture.Use(TextureUnit.Texture0);
+        _renderer.Load(_movableTriangles);
+    }
+
+    private void MoveControllerOnEndMoving() {
+        _movableTriangles.Clear();
     }
 
     protected override void OnRenderFrame(FrameEventArgs args) {
         base.OnRenderFrame(args);
-        
-        GL.Clear(ClearBufferMask.ColorBufferBit);
 
-        GL.BindVertexArray(_vertexArrayObject);
-        
-        _texture.Use(TextureUnit.Texture0);
-        _shader.Use();
-        
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / 5);
-        
+        _time += args.Time;
+
+        IEnumerable<Triangle>? triangles = _finalTriangles;
+        if (_moveController.IsMoving) {
+            triangles = _movableTriangles;
+        }
+        _renderer.RenderFrame(triangles);
+
+        if (_moveController.IsMoving) {
+            _movableTriangles = new List<Triangle>(_moveController.Move(_movableTriangles, _time));
+        }
+
         SwapBuffers();
     }
 
@@ -81,14 +68,8 @@ public sealed class Screensaver : GameWindow {
     }
 
     protected override void OnUnload() {
-        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-        GL.BindVertexArray(0);
-        GL.UseProgram(0);
-
-        GL.DeleteBuffer(_vertexBufferObject);
-        GL.DeleteVertexArray(_vertexArrayObject);
-
-        GL.DeleteProgram(_shader.Handle);
+        _moveController.EndMoving -= MoveControllerOnEndMoving;
+        _renderer.Unload();
 
         base.OnUnload();
     }

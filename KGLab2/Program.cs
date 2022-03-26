@@ -7,5 +7,5 @@ var nativeWindowSettings = new NativeWindowSettings() {
     Title = "Screensaver собачка",
 };
 
-using var screensaver = new Screensaver(GameWindowSettings.Default, nativeWindowSettings);
+using var screensaver = new Screensaver(GameWindowSettings.Default, nativeWindowSettings, new Renderer());
 screensaver.Run();
