@@ -7,11 +7,11 @@ public sealed class Renderer : IRenderer {
     private int _vertexBufferObject;
     private int _vertexArrayObject;
     
-    private Shader _shader;
-    private Texture _texture;
+    private Shader? _shader;
+    private Texture? _texture;
     private float[]? _vertices;
 
-    private IEnumerable<Triangle> _bufTriangles;
+    private IEnumerable<Triangle>? _bufTriangles;
 
     public void Load(IEnumerable<Triangle> triangles) {
         GL.ClearColor(0f, 0f, 0f, 1f);
@@ -67,10 +67,10 @@ public sealed class Renderer : IRenderer {
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.DynamicDraw);
         }
 
-        _texture.Use(TextureUnit.Texture0);
-        _shader.Use();
+        _texture!.Use(TextureUnit.Texture0);
+        _shader!.Use();
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices.Length / 5);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _vertices!.Length / 5);
     }
 
     public void Unload() {
@@ -81,6 +81,6 @@ public sealed class Renderer : IRenderer {
         GL.DeleteBuffer(_vertexBufferObject);
         GL.DeleteVertexArray(_vertexArrayObject);
 
-        GL.DeleteProgram(_shader.Handle);
+        GL.DeleteProgram(_shader!.Handle);
     }
 }

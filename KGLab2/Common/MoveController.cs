@@ -4,7 +4,8 @@ using OpenTK.Mathematics;
 namespace KGLab2.Common; 
 
 public class MoveController {
-    private readonly double _startTime;
+    private double _startTime;
+    private readonly List<Triangle> _startTriangles;
     private readonly List<Triangle> _finalTriangles;
     private readonly double _duration;
 
@@ -13,11 +14,22 @@ public class MoveController {
     public bool IsMoving { get; private set; }
     public event Action? EndMoving;
     
-    public MoveController(double startTime, List<Triangle> finalTriangles, double duration) {
+    public MoveController(double startTime, List<Triangle> finalTriangles, List<Triangle> startTriangles, double duration) {
         _startTime = startTime;
         _finalTriangles = finalTriangles;
+        _startTriangles = startTriangles;
         _duration = duration;
         IsMoving = true;
+    }
+
+    public void Start(double startTime) {
+        IsMoving = true;
+        _startTime = startTime;
+    }
+
+    public void Stop() {
+        IsMoving = false;
+        EndMoving?.Invoke();
     }
 
     public IEnumerable<Triangle> Move(IEnumerable<Triangle> triangles, double curTime) {
@@ -30,20 +42,22 @@ public class MoveController {
         IEnumerable<Triangle> result = triangles.Select(t => MoveTriangle(t, time));
 
         if (time >= 1f) {
-            IsMoving = false;
-            EndMoving?.Invoke();
+            Stop();
         }
 
         return result;
     }
 
     private Triangle MoveTriangle(Triangle triangle, double time) {
-        float[] vertices = triangle.Vertices.ToArray();
-        var finalTriangle = _finalTriangles.Find(t => MatchTriangle(t, vertices))!;
-        float[] finalVertices = finalTriangle.Vertices.ToArray();
+        float[] vertices = (float[])triangle.Vertices;
+        Triangle startTriangle = _startTriangles.Find(t => MatchTriangle(t, vertices))!;
+        Triangle finalTriangle = _finalTriangles.Find(t => MatchTriangle(t, vertices))!;
+
+        float[] startVertices = (float[]) startTriangle.Vertices;
+        float[] finalVertices = (float[])finalTriangle.Vertices;
         
         for (int i = 0; i < 15; i += 5) {
-            var startVector = new Vector3(vertices[i], vertices[i + 1], 0);
+            var startVector = new Vector3(startVertices[i], startVertices[i + 1], 0);
             var endVector = new Vector3(finalVertices[i], finalVertices[i + 1], 0);
 
             var (x, y, _) = Vector3.Lerp(startVector, endVector, (float)time);
@@ -51,7 +65,7 @@ public class MoveController {
             vertices[i + 1] = y;
         }
 
-        return new Triangle(vertices);
+        return triangle;
     }
 
     private bool MatchTriangle(Triangle t, float[] matchVertices) {

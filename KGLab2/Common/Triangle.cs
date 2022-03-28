@@ -1,6 +1,6 @@
 ﻿namespace KGLab2.Common; 
 
-public class Triangle {
+public class Triangle : ICloneable{
     public IEnumerable<float> Vertices => _vertices;
     private readonly float[] _vertices;
 
@@ -63,18 +63,30 @@ public class Triangle {
         }
     }
 
-    public static IEnumerable<Triangle> ShuffleTriangles(IEnumerable<Triangle> triangles) {
+    public static IEnumerable<Triangle> ShuffleTriangles(IEnumerable<Triangle> triangles, int triangleWidth) {
         var random = new Random();
         
         return triangles.Select(t => {
             float[] vertices = t.Vertices.ToArray();
 
-            for (int i = 0; i < 15; i += 5) {
-                vertices[i] = random.NextSingle(-1f, 1f);
-                vertices[i + 1] = random.NextSingle(-1f, 1f);
-            }
+            float a = random.NextSingle(-1f, 1f);
+            float b = random.NextSingle(-1f, 1f);
+            float cordStep = 2f / triangleWidth;
+
+            vertices[0] = a + cordStep;
+            vertices[1] = b;
+            
+            vertices[5] = a;
+            vertices[6] = b - cordStep;
+            
+            vertices[10] = a;
+            vertices[11] = b;
 
             return new Triangle(vertices);
         });
+    }
+
+    public object Clone() {
+        return new Triangle(_vertices);
     }
 }
