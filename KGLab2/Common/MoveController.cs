@@ -16,8 +16,8 @@ public class MoveController {
     
     public MoveController(double startTime, List<Triangle> finalTriangles, List<Triangle> startTriangles, double duration) {
         _startTime = startTime;
-        _finalTriangles = finalTriangles;
-        _startTriangles = startTriangles;
+        _finalTriangles = finalTriangles.ToList();
+        _startTriangles = startTriangles.ToList();
         _duration = duration;
         IsMoving = true;
     }
@@ -41,7 +41,7 @@ public class MoveController {
 
         IEnumerable<Triangle> result = triangles.Select(t => MoveTriangle(t, time));
 
-        if (time >= 1f) {
+        if (time > 1f) {
             Stop();
         }
 
@@ -60,12 +60,12 @@ public class MoveController {
             var startVector = new Vector3(startVertices[i], startVertices[i + 1], 0);
             var endVector = new Vector3(finalVertices[i], finalVertices[i + 1], 0);
 
-            var (x, y, _) = Vector3.Lerp(startVector, endVector, (float)time);
+            var (x, y, _) = Vector3.Lerp(startVector, endVector, (float)Math.Clamp(time, .0, 1.0));
             vertices[i] = x;
             vertices[i + 1] = y;
         }
 
-        return triangle;
+        return new Triangle(vertices);
     }
 
     private bool MatchTriangle(Triangle t, float[] matchVertices) {

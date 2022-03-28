@@ -1,6 +1,5 @@
 ﻿using KGLab2.Common;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -11,16 +10,21 @@ public sealed class Screensaver : GameWindow {
     private readonly List<Triangle> _finalTriangles;
     private double _time;
     private readonly IRenderer _renderer;
+    
     private readonly double _duration;
     private readonly int _triangleWidth;
-
+    private readonly double _waitTime;
+    
     private List<Triangle> _movableTriangles;
+    private List<Triangle>? _triangles;
     private MoveController _moveController;
+    private WaitController? _waitController;
 
     public Screensaver(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, IRenderer renderer)
         : base(gameWindowSettings, nativeWindowSettings) {
         _triangleWidth = 25;
         _duration = 10;
+        _waitTime = 10;
         _finalTriangles = new List<Triangle>(Triangle.GeneratePlane(_triangleWidth));
         _movableTriangles = new List<Triangle>(Triangle.ShuffleTriangles(_finalTriangles, _triangleWidth));
         _renderer = renderer;
@@ -38,6 +42,15 @@ public sealed class Screensaver : GameWindow {
     }
 
     private void MoveControllerOnEndMoving() {
+        _triangles = null;
+        if (_waitController != null) {
+            _waitController.EndWaiting -= WaitControllerOnEndWaiting;
+        }
+        _waitController = new WaitController(_time, _waitTime);
+        _waitController.EndWaiting += WaitControllerOnEndWaiting;
+    }
+
+    private void WaitControllerOnEndWaiting() {
         _moveController.EndMoving -= MoveControllerOnEndMoving;
         _movableTriangles = new List<Triangle>(Triangle.ShuffleTriangles(_finalTriangles, _triangleWidth));
         _moveController = new MoveController(_time, _finalTriangles, new List<Triangle>(_movableTriangles), _duration);
@@ -48,16 +61,12 @@ public sealed class Screensaver : GameWindow {
         base.OnRenderFrame(args);
 
         _time += args.Time;
-
-        IEnumerable<Triangle> triangles = _finalTriangles;
         if (_moveController.IsMoving) {
-            triangles = _movableTriangles;
+            _triangles = _moveController.Move(_triangles ?? _movableTriangles, _time).ToList();
         }
-        _renderer.RenderFrame(triangles);
+        _waitController?.Tick(args.Time);
 
-        if (_moveController.IsMoving) {
-            _movableTriangles = _moveController.Move(_movableTriangles, _time).ToList();
-        }
+        _renderer.RenderFrame(_triangles ?? _finalTriangles);
 
         SwapBuffers();
     }
@@ -68,7 +77,7 @@ public sealed class Screensaver : GameWindow {
         }
         
         #if DEBUG
-        Title = $"Screensaver собачка | time {_time} | ct {(_time % 10) / 10.0}";
+        Title = $"Screensaver собачка | time {_time} | mov {_moveController.IsMoving} | wait {_waitController?.IsWaiting}";
         #endif
         base.OnUpdateFrame(args);
     }
@@ -81,6 +90,9 @@ public sealed class Screensaver : GameWindow {
 
     protected override void OnUnload() {
         _moveController.EndMoving -= MoveControllerOnEndMoving;
+        if (_waitController != null) {
+            _waitController.EndWaiting -= WaitControllerOnEndWaiting;
+        }
         _renderer.Unload();
 
         base.OnUnload();
