@@ -5,6 +5,7 @@ layout(location = 1) in vec2 aTexCord;
 //layout(location = 2) in vec2 sPosition;
 
 out vec2 texCord;
+out vec3 FragPos;
 
 //uniform mat4 model;
 //uniform float time;
@@ -13,6 +14,7 @@ out vec2 texCord;
 
 void main(void) {
     texCord = aTexCord;
+    FragPos = aPosition;
     
 //    mat4 m = mat4(1.0, 0.0, 0.0, 0.0,
 //                0.0, 1.0, 0.0, 0.0,

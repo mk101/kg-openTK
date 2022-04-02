@@ -1,4 +1,5 @@
 ﻿using KGLab2;
+using KGLab2.Common;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 

@@ -1,7 +1,7 @@
-﻿using KGLab2.Common;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
-namespace KGLab2; 
+namespace KGLab2.Common; 
 
 public sealed class Renderer : IRenderer {
     private int _vertexBufferObject;
@@ -24,7 +24,7 @@ public sealed class Renderer : IRenderer {
     }
 
     private void ApplyTexture() {
-        _shader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
+        _shader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/lighting.frag");
         _shader.Use();
 
         var vertexLocation = _shader.GetAttribLocation("aPosition");
@@ -35,6 +35,12 @@ public sealed class Renderer : IRenderer {
         GL.EnableVertexAttribArray(texCordLocation);
         GL.VertexAttribPointer(texCordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float),
             3 * sizeof(float));
+        
+        _shader.SetVector3("light.position", new Vector3(0,0,-3f));
+        _shader.SetVector3("light.direction", new Vector3(0,0, 1));
+        _shader.SetFloat("light.cutOff", MathF.Cos(MathHelper.DegreesToRadians(12.5f)));
+        _shader.SetFloat("light.outerCutOff",  MathF.Cos(MathHelper.DegreesToRadians(17.5f)));
+        _shader.SetVector3("light.ambient", new Vector3(0.2f,0.2f,0.2f));
 
         _texture = Texture.LoadFromFile("../../../Resources/sobachka.jpg", false);
         _texture.Use(TextureUnit.Texture0);
