@@ -40,7 +40,6 @@ public sealed class Renderer : IRenderer {
         _shader.SetVector3("light.direction", new Vector3(0,0, 1));
         _shader.SetFloat("light.cutOff", MathF.Cos(MathHelper.DegreesToRadians(12.5f)));
         _shader.SetFloat("light.outerCutOff",  MathF.Cos(MathHelper.DegreesToRadians(17.5f)));
-        _shader.SetVector3("light.ambient", new Vector3(0.2f,0.2f,0.2f));
 
         _texture = Texture.LoadFromFile("../../../Resources/sobachka.jpg", false);
         _texture.Use(TextureUnit.Texture0);
