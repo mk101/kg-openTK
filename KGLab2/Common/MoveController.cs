@@ -15,11 +15,11 @@ public class MoveController {
     public event Action? EndMoving;
     
     public MoveController(double startTime, List<Triangle> finalTriangles, List<Triangle> startTriangles, double duration) {
-        _startTime = startTime;
         _finalTriangles = finalTriangles.ToList();
         _startTriangles = startTriangles.ToList();
         _duration = duration;
-        IsMoving = true;
+        
+        Start(startTime);
     }
 
     public void Start(double startTime) {

@@ -6,7 +6,7 @@ public class WaitController {
     
     public bool IsWaiting { get; private set; }
     
-    public event Action EndWaiting;
+    public event Action? EndWaiting;
     
     public WaitController(double startTime, double time) {
         _currentTime = startTime;

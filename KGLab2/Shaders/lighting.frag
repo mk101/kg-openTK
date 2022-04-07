@@ -5,6 +5,7 @@ struct Light {
     vec3  direction;
     float cutOff;
     float outerCutOff;
+    vec3 ambient;
 };
 
 uniform Light light;
@@ -24,5 +25,8 @@ void main() {
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
     result *= intensity;
 
+    if (intensity < 0.1) {
+        result = light.ambient * texture(texture0, texCord).rgb;
+    }
     FragColor = vec4(result, 1);
 }

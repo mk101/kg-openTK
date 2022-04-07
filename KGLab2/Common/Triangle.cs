@@ -1,12 +1,12 @@
 ﻿namespace KGLab2.Common; 
 
-public class Triangle : ICloneable{
+public class Triangle : ICloneable {
     public IEnumerable<float> Vertices => _vertices;
     private readonly float[] _vertices;
 
     public Triangle(float[] vertices) {
         if (vertices.Length != 15) {
-            throw new ArgumentException("Vertices array must has 3 values");
+            throw new ArgumentException("Vertices array must has 15 values");
         }
 
         _vertices = new float[vertices.Length];
@@ -32,17 +32,14 @@ public class Triangle : ICloneable{
         
         float cordStep = 2f / triangleWidth;
         float texStep = 1f / triangleWidth;
-        var rand = new Random();
+
         for (int i = 0; i < triangleWidth; i++) {
             for (int j = 0; j < triangleWidth; j++) {
-                float randX = rand.NextSingle(-1f, 1f);
                 yield return new Triangle( new[] {
                     x + cordStep, y,            0, tX + texStep, tY,
                     x,            y - cordStep, 0, tX,           tY + texStep,
                     x,            y,            0, tX,           tY,
-                }); 
-                
-                randX = rand.NextSingle(-1f, 1f);
+                });
 
                 yield return new Triangle( new[] {
                     x + cordStep, y,            0, tX + texStep, tY,

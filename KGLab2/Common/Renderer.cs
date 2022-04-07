@@ -27,11 +27,11 @@ public sealed class Renderer : IRenderer {
         _shader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/lighting.frag");
         _shader.Use();
 
-        var vertexLocation = _shader.GetAttribLocation("aPosition");
+        int vertexLocation = _shader.GetAttribLocation("aPosition");
         GL.EnableVertexAttribArray(vertexLocation);
         GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
 
-        var texCordLocation = _shader.GetAttribLocation("aTexCord");
+        int texCordLocation = _shader.GetAttribLocation("aTexCord");
         GL.EnableVertexAttribArray(texCordLocation);
         GL.VertexAttribPointer(texCordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float),
             3 * sizeof(float));
@@ -40,6 +40,7 @@ public sealed class Renderer : IRenderer {
         _shader.SetVector3("light.direction", new Vector3(0,0, 1));
         _shader.SetFloat("light.cutOff", MathF.Cos(MathHelper.DegreesToRadians(12.5f)));
         _shader.SetFloat("light.outerCutOff",  MathF.Cos(MathHelper.DegreesToRadians(17.5f)));
+        _shader.SetVector3("light.ambient", new Vector3(0.1f,0.1f, 0.1f));
 
         _texture = Texture.LoadFromFile("../../../Resources/sobachka.jpg", false);
         _texture.Use(TextureUnit.Texture0);
@@ -54,24 +55,21 @@ public sealed class Renderer : IRenderer {
 
         _vertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(_vertexArrayObject);
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-        GL.EnableVertexAttribArray(0);
+        //GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+        //GL.EnableVertexAttribArray(0);
     }
 
     public void RenderFrame(IEnumerable<Triangle> triangles) {
         GL.Clear(ClearBufferMask.ColorBufferBit /*| ClearBufferMask.DepthBufferBit*/);
 
-        if (Equals(triangles, _bufTriangles)) { 
-            GL.BindVertexArray(_vertexArrayObject);
-        } else {
-            //_vertices = null;
+        if (!Equals(triangles, _bufTriangles)) {
             _bufTriangles = triangles;
-            //BindVertexes(triangles);
-            //ApplyTexture();
             _vertices = Triangle.GetAllVertices(triangles);
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.DynamicDraw);
         }
 
+        GL.BindVertexArray(_vertexArrayObject);
+        
         _texture!.Use(TextureUnit.Texture0);
         _shader!.Use();
 
@@ -87,5 +85,6 @@ public sealed class Renderer : IRenderer {
         GL.DeleteVertexArray(_vertexArrayObject);
 
         GL.DeleteProgram(_shader!.Handle);
+        GL.DeleteTexture(_texture!.Handle);
     }
 }
